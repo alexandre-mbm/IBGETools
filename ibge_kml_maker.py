@@ -44,18 +44,24 @@ def DumpGroundOverlay(basename, ibge_map):
     east = "{0:.10f}".format(ibge_map.GetWidth() + ibge_map.GetX())
     west = "{0:.10f}".format(ibge_map.GetX())
 
-    print "    <GroundOverlay>"
-    print "      <Icon>"
-    print "        <href>", "%s.png" % basename, "</href>"
-    print "      </Icon>"
-    print "      <LatLonBox>"
-    print "        <north>", north, "</north>"
-    print "        <south>", south, "</south>"
-    print "        <east>", east, "</east>"
-    print "        <west>", west, "</west>"
-    print "      </LatLonBox>"
-    print "    </GroundOverlay>"
+    #print "    <GroundOverlay>"
+    #print "      <Icon>"
+    #print "        <href>", "%s.tif" % basename, "</href>"
+    #print "      </Icon>"
+    #print "      <LatLonBox>"
+    #print "        <north>", north, "</north>"
+    #print "        <south>", south, "</south>"
+    #print "        <east>", east, "</east>"
+    #print "        <west>", west, "</west>"
+    #print "      </LatLonBox>"
+    #print "    </GroundOverlay>"
 
+    geo_tiff_cmd = "gdal_translate -a_srs '+proj=latlong +datum=WGS84' -of " \
+            "GTiff -co INTERLEAVE=PIXEL -co COMPRESS=LZW -a_ullr " \
+            "%s %s %s %s %s.png %s_geo.tif" \
+            % (west, north, east, south, basename, basename)
+
+    print geo_tiff_cmd
 
 def Main():
     if len(sys.argv) is not 2 or not os.path.isdir(sys.argv[1]):
@@ -67,9 +73,9 @@ def Main():
         for filename in fnmatch.filter(filenames, '[0-9]*.pdf'):
             map_paths.append(os.path.join(root, filename))
 
-    print '<?xml version="1.0" encoding="UTF-8"?>'
-    print '<kml xmlns="http://www.opengis.net/kml/2.2">'
-    print "  <Folder>"
+    #print '<?xml version="1.0" encoding="UTF-8"?>'
+    #print '<kml xmlns="http://www.opengis.net/kml/2.2">'
+    #print "  <Folder>"
 
     for map_path in map_paths:
         ibge_map = GetMapFromPath(map_path)
@@ -81,8 +87,12 @@ def Main():
         SaveMapImage(basename, ibge_map)
         DumpGroundOverlay(basename, ibge_map)
 
-    print "  </Folder>"
-    print "</kml>"
+    #print "  </Folder>"
+    #print "</kml>"
+
+    print "gdal_merge.py -v -co COMPRESS=LZW -co TILED=YES " \
+            "-co BLOCKXSIZE=512 -co BLOCKYSIZE=512 " \
+            "--config GDAL_CACHEMAX 2047 *_geo.tif -o merge.tif"
 
 
 if __name__ == "__main__":
